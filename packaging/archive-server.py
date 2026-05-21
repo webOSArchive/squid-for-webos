@@ -27,6 +27,12 @@ HOST_MAP = {
 # Google domains to redirect to DuckDuckGo Lite
 GOOGLE_DOMAINS = {"www.google.com", "google.com"}
 
+# Dead Palm/HP connectivity-check domains — return a minimal 200 so the device
+# doesn't mistake a timeout for a captive portal.
+# PmNetConfigManager probes developer.palm.com first; if it gets no HTML title it
+# falls back to www.hp.com and triggers the "Network Login Required" notification.
+CONNECTIVITY_CHECK_DOMAINS = {"developer.palm.com"}
+
 MIME_EXTRA = {
     ".json": "application/json",
     ".cgi":  "text/html",
@@ -37,6 +43,10 @@ class ArchiveHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         host = self.headers.get("Host", "").split(":")[0].lower()
+
+        if host in CONNECTIVITY_CHECK_DOMAINS:
+            self._connectivity_ok()
+            return
 
         if host in GOOGLE_DOMAINS:
             self._redirect_to_ddg()
@@ -110,6 +120,14 @@ class ArchiveHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "public, max-age=86400")
         self.end_headers()
         self.wfile.write(data)
+
+    def _connectivity_ok(self):
+        body = b"<html><head><title>Palm Developer Network</title></head><body><p>OK</p></body></html>"
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def _redirect_to_ddg(self):
         parsed = urllib.parse.urlparse(self.path)

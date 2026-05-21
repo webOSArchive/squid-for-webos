@@ -65,7 +65,7 @@ http_access allow all
 # Requests to archived domains are routed to the archive server
 # on port 3130 instead of the internet.
 # ---------------------------------------------------------------
-acl archived_domains dstdomain help.palm.com downloads.help.palm.com www.google.com google.com
+acl archived_domains dstdomain help.palm.com downloads.help.palm.com www.google.com google.com developer.palm.com
 
 cache_peer 127.0.0.1 parent 3130 0 no-query originserver name=archive
 cache_peer_access archive allow archived_domains
