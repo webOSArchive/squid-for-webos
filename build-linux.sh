@@ -45,21 +45,9 @@ DIST_DIR="$SCRIPT_DIR/dist"
 # ---------------------------------------------------------------
 TARGETS=(amd64 arm64 armv7)
 
-declare -A OPENSSL_TARGET=(
-    [amd64]="linux-x86_64"
-    [arm64]="linux-aarch64"
-    [armv7]="linux-armv4"
-)
-declare -A HOST_TRIPLE=(
-    [amd64]=""
-    [arm64]="aarch64-linux-gnu"
-    [armv7]="arm-linux-gnueabihf"
-)
-declare -A CROSS_PREFIX=(
-    [amd64]=""
-    [arm64]="aarch64-linux-gnu-"
-    [armv7]="arm-linux-gnueabihf-"
-)
+# Associative arrays (declare -A) require bash 4+ and are declared inside main()
+# after maybe_use_docker(), which exits on bash-3 hosts (macOS) by re-execing
+# inside Docker where bash 5 is available.
 
 # ---------------------------------------------------------------
 
@@ -373,6 +361,25 @@ main() {
     echo ""
 
     maybe_use_docker "$@"
+
+    # Only reachable inside Docker (bash 5) or on a Linux host (bash 4+).
+    # declare -gA makes these visible to all build functions.
+    declare -gA OPENSSL_TARGET=(
+        [amd64]="linux-x86_64"
+        [arm64]="linux-aarch64"
+        [armv7]="linux-armv4"
+    )
+    declare -gA HOST_TRIPLE=(
+        [amd64]=""
+        [arm64]="aarch64-linux-gnu"
+        [armv7]="arm-linux-gnueabihf"
+    )
+    declare -gA CROSS_PREFIX=(
+        [amd64]=""
+        [arm64]="aarch64-linux-gnu-"
+        [armv7]="arm-linux-gnueabihf-"
+    )
+
     install_deps
     mkdir -p "$BUILD_DIR"
     download_sources
