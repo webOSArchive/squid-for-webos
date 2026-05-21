@@ -58,7 +58,12 @@ echo "Installing systemd service..."
 cp "$SCRIPT_DIR/squid-sslbump.service" "/etc/systemd/system/${SERVICE_NAME}.service"
 systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"
-systemctl start "$SERVICE_NAME"
+# restart if already running (upgrade), otherwise start fresh
+if systemctl is-active --quiet "$SERVICE_NAME"; then
+    systemctl restart "$SERVICE_NAME"
+else
+    systemctl start "$SERVICE_NAME"
+fi
 
 echo ""
 echo "Done. Service status:"

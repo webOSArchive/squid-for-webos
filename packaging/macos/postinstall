@@ -35,7 +35,8 @@ cp "$PLIST_SRC" "$PLIST_DEST"
 chown root:wheel "$PLIST_DEST"
 chmod 644 "$PLIST_DEST"
 
-# Load the service
+# Stop existing service if running (upgrade path), then (re)start with new config
+launchctl unload "$PLIST_DEST" 2>/dev/null || true
 launchctl load -w "$PLIST_DEST"
 
 echo ""
