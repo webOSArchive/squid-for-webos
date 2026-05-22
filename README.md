@@ -154,6 +154,20 @@ See the mirrored networking step in [Option B: WSL2](#option-b-wsl2) above.
 
 The setup page may show the container's internal IP instead of your machine's LAN IP. Set `PROXY_IP` in `docker-compose.yml` to your machine's LAN IP. This is display-only — the proxy itself works regardless.
 
+### Device shows "Network Login Required" / thinks it's behind a captive portal
+
+webOS checks for internet connectivity by probing `http://developer.palm.com`, which is a dead Palm/HP server. When the probe times out the device incorrectly concludes it's behind a hotspot login page and shows the "Network Login Required" notification, blocking internet access until dismissed.
+
+**If you run this proxy:** The proxy automatically handles this — `developer.palm.com` requests are intercepted and returned with a valid response. No action needed beyond normal proxy setup.
+
+**If you don't run the proxy:** Add one line to `/etc/hosts` on the device (requires developer mode / root access, e.g. via Internalz or a terminal):
+
+```
+173.230.142.249	developer.palm.com
+```
+
+This redirects the dead domain to the webOS Archive server, which returns a valid response and satisfies the connectivity check. The fix survives reboots but will be wiped by a webOS Doctor restore.
+
 ### Linux: systemd not found after install
 
 WSL1 and some minimal installs don't have systemd. WSL2 does — enable it per [Option B: WSL2](#option-b-wsl2) above.
@@ -167,15 +181,8 @@ WSL1 and some minimal installs don't have systemd. WSL2 does — enable it per [
 ### Docker image
 
 ```bash
-docker build -t squid-sslbump-for-webos:latest .
-```
-
-Multi-arch (amd64 + arm64):
-```bash
-docker buildx create --use --name multiarch --driver docker-container
-docker run --privileged --rm tonistiigi/binfmt --install all
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -t webosarchive/squid-sslbump-for-webos:latest --push .
+./build-docker.sh              # build and push to Docker Hub (amd64 + arm64)
+./build-docker.sh --no-push   # build amd64 only and load locally for testing
 ```
 
 First build takes 30–60 minutes (Squid compiles from source).
